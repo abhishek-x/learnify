@@ -10,6 +10,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from '../utils/jwt';
 import sendMail from '../utils/sendMail';
 import { redis } from '../utils/redis_connect';
+import { getUserById } from '../services/user.service';
 
 dotenv.config();
 
@@ -215,6 +216,19 @@ export const updateAccessToken = CatchAsyncError(
                 accessToken,
             });
 
+        }
+        catch (error: any) {
+            return next(new ErrorHandler(error.message, 400));
+        }
+    }
+);
+
+// get user info
+export const getUserInfo = CatchAsyncError(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.user?._id;
+            getUserById(userId, res);
         }
         catch (error: any) {
             return next(new ErrorHandler(error.message, 400));
