@@ -9,6 +9,7 @@ import { CatchAsyncError } from "../middlewares/catchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 import { sendToken } from '../utils/jwt';
 import sendMail from '../utils/sendMail';
+import { redis } from '../utils/redis_connect';
 
 dotenv.config();
 
@@ -163,6 +164,11 @@ export const logoutUser = CatchAsyncError(
         try {
             res.cookie("access_token", "", { maxAge: 1 });
             res.cookie("refresh_token", "", { maxAge: 1 });
+
+            // Delete cache from redis
+            const userId = req.user?._id || '';
+            redis.del(userId);
+
             res.status(200).json({
                 success: true,
                 message: "Logged out successfully",
