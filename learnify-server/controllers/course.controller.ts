@@ -5,6 +5,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import cloudinary from "cloudinary";
 import { createCourse } from "../services/course.service";
 import CourseModel from "../models/course.model";
+import { redis } from "../utils/redis_connect";
 
 // upload course
 export const uploadCourse = CatchAsyncError(
@@ -73,11 +74,20 @@ export const editCourse = CatchAsyncError(
 export const getSingleCourse = CatchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const course = await CourseModel.findById(req.params.id).select(
-                "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
-            );
+            const courseId = req.params.id;
+            const cachedCourse = await redis.get(courseId);
 
-            res.status(201).json({
+            const course = cachedCourse
+                ? JSON.parse(cachedCourse)
+                : await CourseModel.findById(courseId).select(
+                    "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
+                );
+
+            if (!cachedCourse) {
+                await redis.set(courseId, JSON.stringify(course));
+            }
+
+            res.status(200).json({
                 success: true,
                 course,
             });
@@ -92,9 +102,19 @@ export const getSingleCourse = CatchAsyncError(
 export const getAllCourses = CatchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const courses = await CourseModel.find().select(
-                "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
-            );
+            const cacheKey = "allCourses";
+            const cachedCourses = await redis.get(cacheKey);
+
+            let courses;
+
+            if (cachedCourses) {
+                courses = JSON.parse(cachedCourses);
+            } else {
+                courses = await CourseModel.find().select(
+                    "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
+                );
+                await redis.set(cacheKey, JSON.stringify(courses));
+            }
 
             res.status(201).json({
                 success: true,
