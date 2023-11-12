@@ -1,15 +1,15 @@
-import { Request, Response, NextFunction } from "express";
-import { CatchAsyncError } from "../middlewares/catchAsyncError";
-import ErrorHandler from "../utils/ErrorHandler";
-
 import cloudinary from "cloudinary";
-import { createCourse } from "../services/course.service";
-import CourseModel from "../models/course.model";
-import { redis } from "../utils/redis_connect";
 import mongoose from "mongoose";
 import path from "path";
 import ejs from "ejs";
+import { Request, Response, NextFunction } from "express";
+
+import CourseModel from "../models/course.model";
 import sendMail from "../utils/sendMail";
+import ErrorHandler from "../utils/ErrorHandler";
+import { redis } from "../utils/redis_connect";
+import { createCourse } from "../services/course.service";
+import { CatchAsyncError } from "../middlewares/catchAsyncError";
 
 // upload course
 export const uploadCourse = CatchAsyncError(
@@ -338,7 +338,7 @@ export const addReview = CatchAsyncError(
     }
 );
 
-// add reply in review
+// add reply in review (only for admin)
 interface IAddReviewData {
     comment: string;
     courseId: string;
