@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import cron from "node-cron";
 
 import NotificationModel from "../models/notification.model";
 import ErrorHandler from "../utils/ErrorHandler";
@@ -46,3 +47,9 @@ export const updateNotification = CatchAsyncError(
         }
     }
 );
+
+// delete "read" notification every mid-night (00:00:00 - cron) that are created more than 30 days ago
+cron.schedule("0 0 0 * * *", async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await NotificationModel.deleteMany({ status: "read", createdAt: { $lt: thirtyDaysAgo } });
+});
