@@ -11,7 +11,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from '../utils/jwt';
 import sendMail from '../utils/sendMail';
 import { redis } from '../utils/redis_connect';
-import { getUserById } from '../services/user.service';
+import { getAllUsersService, getUserById } from '../services/user.service';
 
 dotenv.config();
 
@@ -391,6 +391,18 @@ export const updateProfilePicture = CatchAsyncError(
                 success: true,
                 user,
             });
+        }
+        catch (error: any) {
+            return next(new ErrorHandler(error.message, 400));
+        }
+    }
+);
+
+// get all users -- only admin
+export const getAllUsers = CatchAsyncError(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            getAllUsersService(res);
         }
         catch (error: any) {
             return next(new ErrorHandler(error.message, 400));
