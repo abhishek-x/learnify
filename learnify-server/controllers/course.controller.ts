@@ -110,21 +110,23 @@ export const getAllCourses = CatchAsyncError(
             const cacheKey = "allCourses";
             const cachedCourses = await redis.get(cacheKey);
 
-            let courses;
-
             if (cachedCourses) {
-                courses = JSON.parse(cachedCourses);
-            } else {
-                courses = await CourseModel.find().select(
+                const courses = JSON.parse(cachedCourses);
+                res.status(200).json({
+                    success: true,
+                    courses,
+                });
+            } 
+            else {
+                const courses = await CourseModel.find().select(
                     "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
                 );
-                await redis.set(cacheKey, JSON.stringify(courses));
+                await redis.set(cacheKey, JSON.stringify(courses), "EX", 604800); // Expires in 7 days
+                res.status(200).json({
+                    success: true,
+                    courses,
+                });
             }
-
-            res.status(200).json({
-                success: true,
-                courses,
-            });
         }
         catch (error: any) {
             return next(new ErrorHandler(error.message, 500));
